@@ -1,0 +1,471 @@
+2023-06-15 13:47:00,590 - mmpose - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.6.13 |Anaconda, Inc.| (default, Jun  4 2021, 14:25:59) [GCC 7.5.0]
+CUDA available: True
+GPU 0: NVIDIA GeForce RTX 3080
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 11.6, V11.6.124
+GCC: gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+PyTorch: 1.10.0
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.2 Product Build 20200624 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.2.3 (Git Hash 7336ca9f055cf1bfa13efb658fe15dc9b41f0740)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX512
+  - CUDA Runtime 11.3
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 8.2
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.3, CUDNN_VERSION=8.2.0, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.10.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.11.0
+OpenCV: 4.7.0
+MMCV: 1.6.0
+MMCV Compiler: GCC 9.3
+MMCV CUDA Compiler: 11.3
+MMPose: 0.25.1+
+------------------------------------------------------------
+
+2023-06-15 13:47:00,591 - mmpose - INFO - Distributed training: False
+2023-06-15 13:47:04,598 - mmpose - INFO - Config:
+log_level = 'INFO'
+load_from = None
+resume_from = None
+dist_params = dict(backend='nccl')
+workflow = [('train', 1)]
+checkpoint_config = dict(interval=5)
+evaluation = dict(interval=10, metric='mAP', save_best='AP')
+optimizer = dict(type='Adam', lr=0.002)
+optimizer_config = dict(grad_clip=None)
+lr_config = dict(
+    policy='step',
+    warmup='linear',
+    warmup_iters=500,
+    warmup_ratio=0.001,
+    step=[170, 200])
+total_epochs = 270
+log_config = dict(
+    interval=200,
+    hooks=[dict(type='TextLoggerHook'),
+           dict(type='TensorboardLoggerHook')])
+channel_cfg = dict(
+    num_output_channels=17,
+    dataset_joints=17,
+    dataset_channel=[[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    ]],
+    inference_channel=[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    ])
+model = dict(
+    type='TopDown',
+    pretrained=None,
+    backbone=dict(
+        type='InLiteHRNet',
+        in_channels=3,
+        extra=dict(
+            stem=dict(stem_channels=32, out_channels=32, expand_ratio=1),
+            num_stages=3,
+            stages_spec=dict(
+                num_modules=(3, 8, 3),
+                num_branches=(2, 3, 4),
+                num_blocks=(2, 2, 2),
+                with_fuse=(True, True, True),
+                num_channels=((40, 80), (40, 80, 160), (40, 80, 160, 320))),
+            with_head=True)),
+    keypoint_head=dict(
+        type='TopdownHeatmapSimpleHead',
+        in_channels=40,
+        out_channels=17,
+        num_deconv_layers=0,
+        extra=dict(final_conv_kernel=1)),
+    train_cfg=dict(),
+    test_cfg=dict(
+        flip_test=True,
+        post_process=True,
+        shift_heatmap=True,
+        unbiased_decoding=False,
+        modulate_kernel=11),
+    loss_pose=dict(type='JointsMSELoss', use_target_weight=True))
+data_cfg = dict(
+    image_size=[288, 384],
+    heatmap_size=[72, 96],
+    num_output_channels=17,
+    num_joints=17,
+    dataset_channel=[[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    ]],
+    inference_channel=[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    ],
+    soft_nms=False,
+    nms_thr=1.0,
+    oks_thr=0.9,
+    vis_thr=0.2,
+    bbox_thr=1.0,
+    use_gt_bbox=False,
+    image_thr=0.0,
+    bbox_file=
+    '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/person_detection_results/COCO_val2017_detections_AP_H_56_person.json'
+)
+val_data_cfg = dict(
+    image_size=[288, 384],
+    heatmap_size=[72, 96],
+    num_output_channels=17,
+    num_joints=17,
+    dataset_channel=[[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    ]],
+    inference_channel=[
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    ],
+    soft_nms=False,
+    nms_thr=1.0,
+    oks_thr=0.9,
+    vis_thr=0.2,
+    bbox_thr=1.0,
+    use_gt_bbox=True,
+    image_thr=0.0,
+    bbox_file=
+    '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/person_detection_results/COCO_val2017_detections_AP_H_56_person.json'
+)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='TopDownRandomFlip', flip_prob=0.5),
+    dict(
+        type='TopDownHalfBodyTransform',
+        num_joints_half_body=8,
+        prob_half_body=0.3),
+    dict(
+        type='TopDownGetRandomScaleRotation', rot_factor=30,
+        scale_factor=0.25),
+    dict(type='TopDownAffine'),
+    dict(type='ToTensor'),
+    dict(
+        type='NormalizeTensor',
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]),
+    dict(type='TopDownGenerateTarget', sigma=3),
+    dict(
+        type='Collect',
+        keys=['img', 'target', 'target_weight'],
+        meta_keys=[
+            'image_file', 'joints_3d', 'joints_3d_visible', 'center', 'scale',
+            'rotation', 'bbox_score', 'flip_pairs'
+        ])
+]
+val_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='TopDownAffine'),
+    dict(type='ToTensor'),
+    dict(
+        type='NormalizeTensor',
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]),
+    dict(
+        type='Collect',
+        keys=['img'],
+        meta_keys=[
+            'image_file', 'center', 'scale', 'rotation', 'bbox_score',
+            'flip_pairs'
+        ])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='TopDownAffine'),
+    dict(type='ToTensor'),
+    dict(
+        type='NormalizeTensor',
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]),
+    dict(
+        type='Collect',
+        keys=['img'],
+        meta_keys=[
+            'image_file', 'center', 'scale', 'rotation', 'bbox_score',
+            'flip_pairs'
+        ])
+]
+data_root = '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images'
+data = dict(
+    samples_per_gpu=16,
+    workers_per_gpu=4,
+    persistent_workers=True,
+    val_dataloader=dict(samples_per_gpu=32),
+    test_dataloader=dict(samples_per_gpu=32),
+    train=dict(
+        type='TopDownCocoDataset',
+        ann_file=
+        '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images/annotations/person_keypoints_train2017.json',
+        img_prefix=
+        '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images/train2017/',
+        data_cfg=dict(
+            image_size=[288, 384],
+            heatmap_size=[72, 96],
+            num_output_channels=17,
+            num_joints=17,
+            dataset_channel=[[
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ]],
+            inference_channel=[
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ],
+            soft_nms=False,
+            nms_thr=1.0,
+            oks_thr=0.9,
+            vis_thr=0.2,
+            bbox_thr=1.0,
+            use_gt_bbox=False,
+            image_thr=0.0,
+            bbox_file=
+            '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/person_detection_results/COCO_val2017_detections_AP_H_56_person.json'
+        ),
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='TopDownRandomFlip', flip_prob=0.5),
+            dict(
+                type='TopDownHalfBodyTransform',
+                num_joints_half_body=8,
+                prob_half_body=0.3),
+            dict(
+                type='TopDownGetRandomScaleRotation',
+                rot_factor=30,
+                scale_factor=0.25),
+            dict(type='TopDownAffine'),
+            dict(type='ToTensor'),
+            dict(
+                type='NormalizeTensor',
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]),
+            dict(type='TopDownGenerateTarget', sigma=3),
+            dict(
+                type='Collect',
+                keys=['img', 'target', 'target_weight'],
+                meta_keys=[
+                    'image_file', 'joints_3d', 'joints_3d_visible', 'center',
+                    'scale', 'rotation', 'bbox_score', 'flip_pairs'
+                ])
+        ]),
+    val=dict(
+        type='TopDownCocoDataset',
+        ann_file=
+        '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images/annotations/person_keypoints_val2017.json',
+        img_prefix=
+        '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images/val2017/',
+        data_cfg=dict(
+            image_size=[288, 384],
+            heatmap_size=[72, 96],
+            num_output_channels=17,
+            num_joints=17,
+            dataset_channel=[[
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ]],
+            inference_channel=[
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ],
+            soft_nms=False,
+            nms_thr=1.0,
+            oks_thr=0.9,
+            vis_thr=0.2,
+            bbox_thr=1.0,
+            use_gt_bbox=True,
+            image_thr=0.0,
+            bbox_file=
+            '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/person_detection_results/COCO_val2017_detections_AP_H_56_person.json'
+        ),
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='TopDownAffine'),
+            dict(type='ToTensor'),
+            dict(
+                type='NormalizeTensor',
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]),
+            dict(
+                type='Collect',
+                keys=['img'],
+                meta_keys=[
+                    'image_file', 'center', 'scale', 'rotation', 'bbox_score',
+                    'flip_pairs'
+                ])
+        ]),
+    test=dict(
+        type='TopDownCocoDataset',
+        ann_file=
+        '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images/annotations/person_keypoints_val2017.json',
+        img_prefix=
+        '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/images/val2017/',
+        data_cfg=dict(
+            image_size=[288, 384],
+            heatmap_size=[72, 96],
+            num_output_channels=17,
+            num_joints=17,
+            dataset_channel=[[
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ]],
+            inference_channel=[
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ],
+            soft_nms=False,
+            nms_thr=1.0,
+            oks_thr=0.9,
+            vis_thr=0.2,
+            bbox_thr=1.0,
+            use_gt_bbox=False,
+            image_thr=0.0,
+            bbox_file=
+            '/home/ubuntu/aa_zhangziyang/DeepHighResolutionNet/data/coco/person_detection_results/COCO_val2017_detections_AP_H_56_person.json'
+        ),
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='TopDownAffine'),
+            dict(type='ToTensor'),
+            dict(
+                type='NormalizeTensor',
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]),
+            dict(
+                type='Collect',
+                keys=['img'],
+                meta_keys=[
+                    'image_file', 'center', 'scale', 'rotation', 'bbox_score',
+                    'flip_pairs'
+                ])
+        ]))
+work_dir = './work_dirs/inlitehrnet_30_coco_384x288'
+gpu_ids = range(0, 1)
+
+2023-06-15 13:47:43,796 - mmpose - INFO - Start running, host: ubuntu@ubuntu-NF5468M5, work_dir: /home/ubuntu/aa_zhangziyang/LearnDeepLearning/Dite-HRNet-main/work_dirs/inlitehrnet_30_coco_384x288
+2023-06-15 13:47:43,797 - mmpose - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) EvalHook                           
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) EvalHook                           
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) EvalHook                           
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+(VERY_LOW    ) TensorboardLoggerHook              
+ -------------------- 
+2023-06-15 13:47:43,798 - mmpose - INFO - workflow: [('train', 1)], max: 270 epochs
+2023-06-15 13:47:43,798 - mmpose - INFO - Checkpoints will be saved to /home/ubuntu/aa_zhangziyang/LearnDeepLearning/Dite-HRNet-main/work_dirs/inlitehrnet_30_coco_384x288 by HardDiskBackend.
+2023-06-15 13:49:56,885 - mmpose - INFO - Epoch [1][200/9364]	lr: 7.972e-04, eta: 19 days, 11:00:13, time: 0.665, data_time: 0.016, memory: 6002, heatmap_loss: 0.0023, acc_pose: 0.0607, loss: 0.0023
+2023-06-15 13:52:03,483 - mmpose - INFO - Epoch [1][400/9364]	lr: 1.596e-03, eta: 18 days, 23:43:06, time: 0.633, data_time: 0.000, memory: 6002, heatmap_loss: 0.0022, acc_pose: 0.1146, loss: 0.0022
+2023-06-15 13:54:10,170 - mmpose - INFO - Epoch [1][600/9364]	lr: 2.000e-03, eta: 18 days, 20:02:14, time: 0.633, data_time: 0.000, memory: 6002, heatmap_loss: 0.0022, acc_pose: 0.1467, loss: 0.0022
+2023-06-15 13:56:16,353 - mmpose - INFO - Epoch [1][800/9364]	lr: 2.000e-03, eta: 18 days, 17:44:13, time: 0.631, data_time: 0.000, memory: 6002, heatmap_loss: 0.0021, acc_pose: 0.1615, loss: 0.0021
+2023-06-15 13:58:23,351 - mmpose - INFO - Epoch [1][1000/9364]	lr: 2.000e-03, eta: 18 days, 16:54:50, time: 0.635, data_time: 0.000, memory: 6002, heatmap_loss: 0.0021, acc_pose: 0.1780, loss: 0.0021
+2023-06-15 14:00:25,738 - mmpose - INFO - Epoch [1][1200/9364]	lr: 2.000e-03, eta: 18 days, 13:39:27, time: 0.612, data_time: 0.000, memory: 6002, heatmap_loss: 0.0021, acc_pose: 0.1978, loss: 0.0021
+2023-06-15 14:02:22,949 - mmpose - INFO - Epoch [1][1400/9364]	lr: 2.000e-03, eta: 18 days, 8:43:34, time: 0.586, data_time: 0.000, memory: 6002, heatmap_loss: 0.0020, acc_pose: 0.2200, loss: 0.0020
+2023-06-15 14:04:21,156 - mmpose - INFO - Epoch [1][1600/9364]	lr: 2.000e-03, eta: 18 days, 5:27:24, time: 0.591, data_time: 0.000, memory: 6002, heatmap_loss: 0.0020, acc_pose: 0.2349, loss: 0.0020
+2023-06-15 14:06:23,177 - mmpose - INFO - Epoch [1][1800/9364]	lr: 2.000e-03, eta: 18 days, 4:23:35, time: 0.610, data_time: 0.000, memory: 6002, heatmap_loss: 0.0020, acc_pose: 0.2521, loss: 0.0020
+2023-06-15 14:08:25,067 - mmpose - INFO - Epoch [1][2000/9364]	lr: 2.000e-03, eta: 18 days, 3:29:24, time: 0.609, data_time: 0.000, memory: 6002, heatmap_loss: 0.0020, acc_pose: 0.2618, loss: 0.0020
+2023-06-15 14:10:26,740 - mmpose - INFO - Epoch [1][2200/9364]	lr: 2.000e-03, eta: 18 days, 2:40:31, time: 0.608, data_time: 0.000, memory: 6002, heatmap_loss: 0.0020, acc_pose: 0.2802, loss: 0.0020
+2023-06-15 14:12:28,112 - mmpose - INFO - Epoch [1][2400/9364]	lr: 2.000e-03, eta: 18 days, 1:54:10, time: 0.607, data_time: 0.000, memory: 6002, heatmap_loss: 0.0019, acc_pose: 0.2838, loss: 0.0019
+2023-06-15 14:14:29,353 - mmpose - INFO - Epoch [1][2600/9364]	lr: 2.000e-03, eta: 18 days, 1:12:32, time: 0.606, data_time: 0.000, memory: 6002, heatmap_loss: 0.0019, acc_pose: 0.2972, loss: 0.0019
+2023-06-15 14:16:33,912 - mmpose - INFO - Epoch [1][2800/9364]	lr: 2.000e-03, eta: 18 days, 1:26:25, time: 0.623, data_time: 0.000, memory: 6002, heatmap_loss: 0.0019, acc_pose: 0.3110, loss: 0.0019
+2023-06-15 14:18:33,857 - mmpose - INFO - Epoch [1][3000/9364]	lr: 2.000e-03, eta: 18 days, 0:33:27, time: 0.600, data_time: 0.000, memory: 6002, heatmap_loss: 0.0019, acc_pose: 0.3193, loss: 0.0019
+2023-06-15 14:20:33,894 - mmpose - INFO - Epoch [1][3200/9364]	lr: 2.000e-03, eta: 17 days, 23:48:05, time: 0.600, data_time: 0.000, memory: 6002, heatmap_loss: 0.0019, acc_pose: 0.3217, loss: 0.0019
+2023-06-15 14:22:35,250 - mmpose - INFO - Epoch [1][3400/9364]	lr: 2.000e-03, eta: 17 days, 23:24:04, time: 0.607, data_time: 0.000, memory: 6002, heatmap_loss: 0.0018, acc_pose: 0.3354, loss: 0.0018
+2023-06-15 14:24:36,735 - mmpose - INFO - Epoch [1][3600/9364]	lr: 2.000e-03, eta: 17 days, 23:04:05, time: 0.607, data_time: 0.000, memory: 6002, heatmap_loss: 0.0018, acc_pose: 0.3453, loss: 0.0018
+2023-06-15 14:26:38,260 - mmpose - INFO - Epoch [1][3800/9364]	lr: 2.000e-03, eta: 17 days, 22:46:26, time: 0.608, data_time: 0.000, memory: 6002, heatmap_loss: 0.0018, acc_pose: 0.3543, loss: 0.0018
+2023-06-15 14:28:38,667 - mmpose - INFO - Epoch [1][4000/9364]	lr: 2.000e-03, eta: 17 days, 22:18:33, time: 0.602, data_time: 0.000, memory: 6002, heatmap_loss: 0.0018, acc_pose: 0.3465, loss: 0.0018
+2023-06-15 14:30:39,988 - mmpose - INFO - Epoch [1][4200/9364]	lr: 2.000e-03, eta: 17 days, 22:02:19, time: 0.607, data_time: 0.000, memory: 6002, heatmap_loss: 0.0018, acc_pose: 0.3604, loss: 0.0018
+2023-06-15 14:32:40,971 - mmpose - INFO - Epoch [1][4400/9364]	lr: 2.000e-03, eta: 17 days, 21:44:06, time: 0.605, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3652, loss: 0.0017
+2023-06-15 14:34:42,284 - mmpose - INFO - Epoch [1][4600/9364]	lr: 2.000e-03, eta: 17 days, 21:30:21, time: 0.607, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3801, loss: 0.0017
+2023-06-15 14:36:43,458 - mmpose - INFO - Epoch [1][4800/9364]	lr: 2.000e-03, eta: 17 days, 21:16:19, time: 0.606, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3768, loss: 0.0017
+2023-06-15 14:38:43,515 - mmpose - INFO - Epoch [1][5000/9364]	lr: 2.000e-03, eta: 17 days, 20:53:54, time: 0.600, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3830, loss: 0.0017
+2023-06-15 14:40:45,782 - mmpose - INFO - Epoch [1][5200/9364]	lr: 2.000e-03, eta: 17 days, 20:50:54, time: 0.611, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3963, loss: 0.0017
+2023-06-15 14:42:49,068 - mmpose - INFO - Epoch [1][5400/9364]	lr: 2.000e-03, eta: 17 days, 20:55:53, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3875, loss: 0.0017
+2023-06-15 14:44:51,981 - mmpose - INFO - Epoch [1][5600/9364]	lr: 2.000e-03, eta: 17 days, 20:57:36, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.3975, loss: 0.0017
+2023-06-15 14:46:55,096 - mmpose - INFO - Epoch [1][5800/9364]	lr: 2.000e-03, eta: 17 days, 21:00:31, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4002, loss: 0.0017
+2023-06-15 14:48:58,567 - mmpose - INFO - Epoch [1][6000/9364]	lr: 2.000e-03, eta: 17 days, 21:05:34, time: 0.617, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4020, loss: 0.0017
+2023-06-15 14:51:01,773 - mmpose - INFO - Epoch [1][6200/9364]	lr: 2.000e-03, eta: 17 days, 21:08:23, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4073, loss: 0.0017
+2023-06-15 14:53:05,009 - mmpose - INFO - Epoch [1][6400/9364]	lr: 2.000e-03, eta: 17 days, 21:11:06, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4132, loss: 0.0017
+2023-06-15 14:55:08,207 - mmpose - INFO - Epoch [1][6600/9364]	lr: 2.000e-03, eta: 17 days, 21:13:17, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4234, loss: 0.0017
+2023-06-15 14:57:10,928 - mmpose - INFO - Epoch [1][6800/9364]	lr: 2.000e-03, eta: 17 days, 21:12:16, time: 0.614, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4120, loss: 0.0017
+2023-06-15 14:59:14,317 - mmpose - INFO - Epoch [1][7000/9364]	lr: 2.000e-03, eta: 17 days, 21:15:12, time: 0.617, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4150, loss: 0.0017
+2023-06-15 15:01:17,330 - mmpose - INFO - Epoch [1][7200/9364]	lr: 2.000e-03, eta: 17 days, 21:15:40, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4235, loss: 0.0017
+2023-06-15 15:03:23,112 - mmpose - INFO - Epoch [1][7400/9364]	lr: 2.000e-03, eta: 17 days, 21:31:42, time: 0.629, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4237, loss: 0.0016
+2023-06-15 15:05:25,631 - mmpose - INFO - Epoch [1][7600/9364]	lr: 2.000e-03, eta: 17 days, 21:28:46, time: 0.613, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4273, loss: 0.0016
+2023-06-15 15:07:29,018 - mmpose - INFO - Epoch [1][7800/9364]	lr: 2.000e-03, eta: 17 days, 21:30:32, time: 0.617, data_time: 0.000, memory: 6002, heatmap_loss: 0.0017, acc_pose: 0.4337, loss: 0.0017
+2023-06-15 15:09:31,963 - mmpose - INFO - Epoch [1][8000/9364]	lr: 2.000e-03, eta: 17 days, 21:29:47, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4421, loss: 0.0016
+2023-06-15 15:11:33,900 - mmpose - INFO - Epoch [1][8200/9364]	lr: 2.000e-03, eta: 17 days, 21:23:50, time: 0.610, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4374, loss: 0.0016
+2023-06-15 15:13:36,856 - mmpose - INFO - Epoch [1][8400/9364]	lr: 2.000e-03, eta: 17 days, 21:23:09, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4356, loss: 0.0016
+2023-06-15 15:15:39,502 - mmpose - INFO - Epoch [1][8600/9364]	lr: 2.000e-03, eta: 17 days, 21:20:53, time: 0.613, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4427, loss: 0.0016
+2023-06-15 15:17:42,642 - mmpose - INFO - Epoch [1][8800/9364]	lr: 2.000e-03, eta: 17 days, 21:21:00, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4406, loss: 0.0016
+2023-06-15 15:19:46,844 - mmpose - INFO - Epoch [1][9000/9364]	lr: 2.000e-03, eta: 17 days, 21:25:58, time: 0.621, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4275, loss: 0.0016
+2023-06-15 15:21:49,256 - mmpose - INFO - Epoch [1][9200/9364]	lr: 2.000e-03, eta: 17 days, 21:22:28, time: 0.612, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4432, loss: 0.0016
+2023-06-15 15:25:35,475 - mmpose - INFO - Epoch [2][200/9364]	lr: 2.000e-03, eta: 17 days, 14:11:22, time: 0.630, data_time: 0.012, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4545, loss: 0.0016
+2023-06-15 15:27:38,261 - mmpose - INFO - Epoch [2][400/9364]	lr: 2.000e-03, eta: 17 days, 14:18:22, time: 0.614, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4616, loss: 0.0016
+2023-06-15 15:29:40,044 - mmpose - INFO - Epoch [2][600/9364]	lr: 2.000e-03, eta: 17 days, 14:20:47, time: 0.609, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4581, loss: 0.0016
+2023-06-15 15:31:43,112 - mmpose - INFO - Epoch [2][800/9364]	lr: 2.000e-03, eta: 17 days, 14:28:19, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4538, loss: 0.0016
+2023-06-15 15:33:47,126 - mmpose - INFO - Epoch [2][1000/9364]	lr: 2.000e-03, eta: 17 days, 14:39:20, time: 0.620, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4619, loss: 0.0016
+2023-06-15 15:35:50,676 - mmpose - INFO - Epoch [2][1200/9364]	lr: 2.000e-03, eta: 17 days, 14:48:00, time: 0.618, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4604, loss: 0.0016
+2023-06-15 15:37:53,669 - mmpose - INFO - Epoch [2][1400/9364]	lr: 2.000e-03, eta: 17 days, 14:54:06, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4695, loss: 0.0016
+2023-06-15 15:39:53,611 - mmpose - INFO - Epoch [2][1600/9364]	lr: 2.000e-03, eta: 17 days, 14:48:13, time: 0.600, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4700, loss: 0.0015
+2023-06-15 15:41:47,448 - mmpose - INFO - Epoch [2][1800/9364]	lr: 2.000e-03, eta: 17 days, 14:19:33, time: 0.569, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4566, loss: 0.0016
+2023-06-15 15:43:41,543 - mmpose - INFO - Epoch [2][2000/9364]	lr: 2.000e-03, eta: 17 days, 13:52:45, time: 0.570, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4632, loss: 0.0016
+2023-06-15 15:45:36,083 - mmpose - INFO - Epoch [2][2200/9364]	lr: 2.000e-03, eta: 17 days, 13:28:27, time: 0.573, data_time: 0.000, memory: 6002, heatmap_loss: 0.0016, acc_pose: 0.4686, loss: 0.0016
+2023-06-15 15:47:30,277 - mmpose - INFO - Epoch [2][2400/9364]	lr: 2.000e-03, eta: 17 days, 13:03:40, time: 0.571, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4749, loss: 0.0015
+2023-06-15 15:49:27,156 - mmpose - INFO - Epoch [2][2600/9364]	lr: 2.000e-03, eta: 17 days, 12:49:04, time: 0.584, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4783, loss: 0.0015
+2023-06-15 15:51:21,429 - mmpose - INFO - Epoch [2][2800/9364]	lr: 2.000e-03, eta: 17 days, 12:25:54, time: 0.571, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4703, loss: 0.0015
+2023-06-15 15:53:19,748 - mmpose - INFO - Epoch [2][3000/9364]	lr: 2.000e-03, eta: 17 days, 12:17:08, time: 0.592, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4811, loss: 0.0015
+2023-06-15 15:55:23,423 - mmpose - INFO - Epoch [2][3200/9364]	lr: 2.000e-03, eta: 17 days, 12:26:28, time: 0.618, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4706, loss: 0.0015
+2023-06-15 15:57:26,875 - mmpose - INFO - Epoch [2][3400/9364]	lr: 2.000e-03, eta: 17 days, 12:34:42, time: 0.617, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4880, loss: 0.0015
+2023-06-15 15:59:29,847 - mmpose - INFO - Epoch [2][3600/9364]	lr: 2.000e-03, eta: 17 days, 12:41:04, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4805, loss: 0.0015
+2023-06-15 16:01:33,027 - mmpose - INFO - Epoch [2][3800/9364]	lr: 2.000e-03, eta: 17 days, 12:47:50, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4885, loss: 0.0015
+2023-06-15 16:03:36,114 - mmpose - INFO - Epoch [2][4000/9364]	lr: 2.000e-03, eta: 17 days, 12:54:03, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4767, loss: 0.0015
+2023-06-15 16:05:38,981 - mmpose - INFO - Epoch [2][4200/9364]	lr: 2.000e-03, eta: 17 days, 12:59:21, time: 0.614, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4826, loss: 0.0015
+2023-06-15 16:07:41,677 - mmpose - INFO - Epoch [2][4400/9364]	lr: 2.000e-03, eta: 17 days, 13:03:56, time: 0.613, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4859, loss: 0.0015
+2023-06-15 16:09:45,331 - mmpose - INFO - Epoch [2][4600/9364]	lr: 2.000e-03, eta: 17 days, 13:11:10, time: 0.618, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4897, loss: 0.0015
+2023-06-15 16:11:48,784 - mmpose - INFO - Epoch [2][4800/9364]	lr: 2.000e-03, eta: 17 days, 13:17:33, time: 0.617, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4936, loss: 0.0015
+2023-06-15 16:13:51,724 - mmpose - INFO - Epoch [2][5000/9364]	lr: 2.000e-03, eta: 17 days, 13:22:13, time: 0.615, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4942, loss: 0.0015
+2023-06-15 16:15:54,868 - mmpose - INFO - Epoch [2][5200/9364]	lr: 2.000e-03, eta: 17 days, 13:27:17, time: 0.616, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4955, loss: 0.0015
+2023-06-15 16:17:58,296 - mmpose - INFO - Epoch [2][5400/9364]	lr: 2.000e-03, eta: 17 days, 13:32:57, time: 0.617, data_time: 0.000, memory: 6002, heatmap_loss: 0.0015, acc_pose: 0.4933, loss: 0.0015
